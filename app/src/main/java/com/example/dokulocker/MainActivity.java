@@ -188,6 +188,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
     @Override
     public void onItemClick(int position) {
         // lempar ke intent baru dan tampilkan gambarnya
-        Toast.makeText(this, list.get(position), Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this,MainActivity2.class);
+        intent.putStringArrayListExtra("list",list);
+        intent.putExtra("position",position);
+        startActivity(intent);
+        //Toast.makeText(this, list.get(position), Toast.LENGTH_SHORT).show();
     }
 }
