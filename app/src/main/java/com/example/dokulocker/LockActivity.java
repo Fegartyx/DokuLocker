@@ -61,6 +61,7 @@ public class LockActivity extends AppCompatActivity {
                     Intent intent = new Intent(LockActivity.this,MainActivity.class);
                     intent.putExtra("Value","Success");
                     startActivity(intent);
+                    finish();
                     Log.i(TAG, "OK");
                 } else {
                     //If screen lock authentication is failed update text
