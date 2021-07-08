@@ -23,6 +23,8 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -35,7 +37,8 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 public class MainActivity extends AppCompatActivity implements RecyclerViewClickInterface {
     private static final String TAG = "MainActivity";
     private static final int PICK_IMAGE = 100;
-    private ArrayList<String> list = new ArrayList<>();
+    private final ArrayList<String> list = new ArrayList<>();
+    String NameFile;
     File mydir;
     Button button;
     RecyclerView recyclerView;
@@ -67,9 +70,29 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
         button.setOnClickListener(v -> {
             // check permission
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+                alertDialog.setTitle("Name File");
+                alertDialog.setMessage("Enter Name");
+
+                final EditText input = new EditText(MainActivity.this);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT);
+                input.setLayoutParams(lp);
+                alertDialog.setView(input);
+
+                alertDialog.setPositiveButton("Done",
+                        (dialog, which) -> {
+                            NameFile = null;
+                            NameFile = input.getText().toString();
+                            Intent intent = new Intent(Intent.ACTION_PICK);
+                            intent.setType("image/*");
+                            startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
+                        });
+                alertDialog.create();
+                alertDialog.show();
+
+
             } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE)){
                 new AlertDialog.Builder(this)
                         .setTitle("Permission Needed")
@@ -161,16 +184,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK){
-            Uri uri = null;
+            String fname = null;
+            Uri uri;
             if (data != null){
                 uri = data.getData();// mendapatkan image dengan uri
                 
                 if (mydir.exists()){
-                    // membuat nama string dengan random
-                    Random generator = new Random();
-                    int n = 10000;
-                    n = generator.nextInt(n);
-                    String fname = uri.getLastPathSegment()+".jpg";
+                    if (NameFile.isEmpty()){
+                        fname = uri.getLastPathSegment();
+                    } else {
+                        fname = NameFile;
+                    }
 
                     // menargetkan direktori file
                     File file = new File (mydir, fname);
