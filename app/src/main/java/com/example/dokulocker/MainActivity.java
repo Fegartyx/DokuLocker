@@ -29,8 +29,12 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Random;
+
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -38,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
     private static final String TAG = "MainActivity";
     private static final int PICK_IMAGE = 100;
     private final ArrayList<String> list = new ArrayList<>();
-    String NameFile;
+    String NameFile,renameFile;
     File mydir;
     Button button;
     RecyclerView recyclerView;
@@ -64,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(recyclerAdapter);
 
+        // untuk memberi garis pembatas antar box item
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(dividerItemDecoration);
 
@@ -71,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
             // check permission
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
-                alertDialog.setTitle("Name File");
-                alertDialog.setMessage("Enter Name");
+                alertDialog.setTitle("Enter Name File");
+                //alertDialog.setMessage("Enter Name");
 
                 final EditText input = new EditText(MainActivity.this);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -116,17 +121,20 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
             }
         });
 
+        // untuk memanggil swipe gesture
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     // swipe gesture
-    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT) {
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        // fungsi untuk memindahkan box item ke atas atau ke bawah
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             return false;
         }
 
+        // fungsi untuk menggeser box item dan menampilkan menu pilihan
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
             int position = viewHolder.getAdapterPosition();
@@ -148,6 +156,34 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
                             .setNegativeButton("No", (dialog, which) -> recyclerAdapter.notifyItemChanged(position))
                             .create().show();
                     break;
+                // change file name
+                case ItemTouchHelper.RIGHT:
+                    File oldFile = new File(mydir + "/" + list.get(position));
+
+                    AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+                    alertDialog.setTitle("Change Name File");
+
+                    final EditText input = new EditText(MainActivity.this);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.MATCH_PARENT);
+                    input.setLayoutParams(lp);
+                    alertDialog.setView(input);
+
+                    alertDialog.setPositiveButton("Done",(dialog, which) -> {
+                        renameFile = input.getText().toString();
+                        File rename = new File(mydir + "/" + renameFile);
+
+                        if (oldFile.renameTo(rename)){
+                            Toast.makeText(MainActivity.this, "File Renamed", Toast.LENGTH_SHORT).show();
+                            list.set(position,renameFile);
+                        } else {
+                            Toast.makeText(MainActivity.this, "File Can't Renamed", Toast.LENGTH_SHORT).show();
+                        }
+                        recyclerAdapter.notifyItemChanged(position);
+                    });
+                    alertDialog.setNegativeButton("Cancel",(dialog, which) -> recyclerAdapter.notifyItemChanged(position)).create().show();
+                    break;
             }
         }
 
@@ -156,6 +192,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
             new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
                     .addSwipeLeftBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.design_default_color_error))
                     .addSwipeLeftActionIcon(R.drawable.ic_baseline_delete_24)
+                    .addSwipeRightBackgroundColor(ContextCompat.getColor(MainActivity.this,R.color.teal_200))
+                    .addSwipeRightActionIcon(R.drawable.ic_baseline_edit_24)
                     .create()
                     .decorate();
             super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
@@ -184,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK){
-            String fname = null;
+            String fname;
             Uri uri;
             if (data != null){
                 uri = data.getData();// mendapatkan image dengan uri
@@ -210,15 +248,18 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    // refresh module
-                    Intent i = new Intent(this, MainActivity.class);
-                    finish();
-                    overridePendingTransition(0, 0);
-                    startActivity(i);
-                    overridePendingTransition(0, 0);
+                    refreshModule();
                 }
             }
         }
+    }
+
+    public void refreshModule(){
+        Intent i = new Intent(this, MainActivity.class);
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(i);
+        overridePendingTransition(0, 0);
     }
 
     // doing something when item clicked
