@@ -175,14 +175,26 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
 
                     alertDialog.setPositiveButton("Done",(dialog, which) -> {
                         renameFile = input.getText().toString();
-                        File rename = new File(mydir + "/" + renameFile);
-
-                        if (oldFile.renameTo(rename)){
-                            Toast.makeText(MainActivity.this, "File Renamed", Toast.LENGTH_SHORT).show();
-                            list.set(position,renameFile);
-                        } else {
-                            Toast.makeText(MainActivity.this, "File Can't Renamed", Toast.LENGTH_SHORT).show();
+                        boolean value = false;
+                        for (int i = 0; i < list.size(); i++) {
+                            if (!renameFile.equalsIgnoreCase(list.get(i))) {
+                                value = true;
+                            } else {
+                                value = false;
+                                break;
+                            }
                         }
+                            if (value){
+                                File rename = new File(mydir + "/" + renameFile);
+                                if (oldFile.renameTo(rename)){
+                                    Toast.makeText(MainActivity.this, "File Renamed", Toast.LENGTH_SHORT).show();
+                                    list.set(position,renameFile);
+                                } else {
+                                    Toast.makeText(MainActivity.this, "File Can't Renamed", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(MainActivity.this, "Name Already Exist", Toast.LENGTH_SHORT).show();
+                            }
                         recyclerAdapter.notifyItemChanged(position);
                     });
                     alertDialog.setNegativeButton("Cancel",(dialog, which) -> recyclerAdapter.notifyItemChanged(position)).create().show();
