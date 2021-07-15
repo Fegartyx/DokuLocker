@@ -91,11 +91,15 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
 
                 alertDialog.setPositiveButton("Done",
                         (dialog, which) -> {
-                            NameFile = null;
                             NameFile = input.getText().toString();
-                            Intent intent = new Intent(Intent.ACTION_PICK);
-                            intent.setType("image/*");
-                            startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
+                            if (checkNameExist(NameFile,list.size())){
+                                Intent intent = new Intent(Intent.ACTION_PICK);
+                                intent.setType("image/*");
+                                startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
+                            } else {
+                                Toast.makeText(this, "Name Already Exist", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
                         });
                 alertDialog.create();
                 alertDialog.show();
@@ -175,26 +179,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
 
                     alertDialog.setPositiveButton("Done",(dialog, which) -> {
                         renameFile = input.getText().toString();
-                        boolean value = false;
-                        for (int i = 0; i < list.size(); i++) {
-                            if (!renameFile.equalsIgnoreCase(list.get(i))) {
-                                value = true;
+                        if (checkNameExist(renameFile,list.size())){
+                            File rename = new File(mydir + "/" + renameFile);
+                            if (oldFile.renameTo(rename)){
+                                Toast.makeText(MainActivity.this, "File Renamed", Toast.LENGTH_SHORT).show();
+                                list.set(position,renameFile);
                             } else {
-                                value = false;
-                                break;
+                                Toast.makeText(MainActivity.this, "File Can't Renamed", Toast.LENGTH_SHORT).show();
                             }
+                        } else {
+                            Toast.makeText(MainActivity.this, "Name Already Exist", Toast.LENGTH_SHORT).show();
                         }
-                            if (value){
-                                File rename = new File(mydir + "/" + renameFile);
-                                if (oldFile.renameTo(rename)){
-                                    Toast.makeText(MainActivity.this, "File Renamed", Toast.LENGTH_SHORT).show();
-                                    list.set(position,renameFile);
-                                } else {
-                                    Toast.makeText(MainActivity.this, "File Can't Renamed", Toast.LENGTH_SHORT).show();
-                                }
-                            } else {
-                                Toast.makeText(MainActivity.this, "Name Already Exist", Toast.LENGTH_SHORT).show();
-                            }
                         recyclerAdapter.notifyItemChanged(position);
                     });
                     alertDialog.setNegativeButton("Cancel",(dialog, which) -> recyclerAdapter.notifyItemChanged(position)).create().show();
@@ -306,5 +301,18 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
             }
         });
         return super.onCreateOptionsMenu(menu);
+    }
+
+    public boolean checkNameExist (String name, int size){
+        boolean value = false;
+        for (int i = 0; i < size; i++){
+            if (!name.equalsIgnoreCase(list.get(i))){
+                value = true;
+            } else {
+                value = false;
+                break;
+            }
+        }
+        return value;
     }
 }
