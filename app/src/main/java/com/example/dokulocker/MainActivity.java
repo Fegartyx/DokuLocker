@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Objects;
 
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
 
         // baca file dari direktori
         File[] files = mydir.listFiles();
-        for (int i = 0; i < files.length; i++){
+        for (int i = 0; i < Objects.requireNonNull(files).length; i++){
             list.add(files[i].getName());
         }
 
@@ -92,13 +93,19 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
                 alertDialog.setPositiveButton("Done",
                         (dialog, which) -> {
                             NameFile = input.getText().toString();
-                            if (checkNameExist(NameFile,list.size())){
+                            if(list.size() == 0){
                                 Intent intent = new Intent(Intent.ACTION_PICK);
                                 intent.setType("image/*");
                                 startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
                             } else {
-                                Toast.makeText(this, "Name Already Exist", Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
+                                if (checkNameExist(NameFile,list.size())){
+                                    Intent intent = new Intent(Intent.ACTION_PICK);
+                                    intent.setType("image/*");
+                                    startActivityForResult(intent,PICK_IMAGE); // jump to onActivityResult Uri
+                                } else {
+                                    Toast.makeText(this, "Name Already Exist", Toast.LENGTH_SHORT).show();
+                                    dialog.dismiss();
+                                }
                             }
                         });
                 alertDialog.create();
@@ -306,6 +313,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewClick
     public boolean checkNameExist (String name, int size){
         boolean value = false;
         for (int i = 0; i < size; i++){
+            Log.d(TAG, "checkNameExist: " + list.get(i));
             if (!name.equalsIgnoreCase(list.get(i))){
                 value = true;
             } else {
